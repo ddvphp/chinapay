@@ -1,5 +1,9 @@
 <?php
+
 namespace DdvPhp\Chinapay\Util;
+
+use \DdvPhp\ChinaPay\Exception;
+
 // define('CP_SIGN_FILE', "sign.file");
 // define('CP_SIGN_FILE_PASSWORD', "sign.file.password");
 // define('CP_SIGN_CERT_TYPE', "sign.cert.type");
