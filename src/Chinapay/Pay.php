@@ -4,7 +4,7 @@ namespace DdvPhp\Chinapay;
 
 
 use DdvPhp\DdvUrl;
-use Ddvphp\ChinaPay\Util\Secss;
+use Ddvphp\Chinapay\Util\Secss;
 
 class Pay
 {
