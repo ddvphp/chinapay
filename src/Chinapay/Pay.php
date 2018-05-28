@@ -137,21 +137,21 @@ class Pay
         }
 
         if (empty($config['merPkcs12'])){
-            $this->secss->setSignFile($config['signFile']);
+            $this->setSignFile($config['signFile']);
         }else{
-            $this->secss->setMerPkcs12($config['merPkcs12']);
+            $this->setMerPkcs12($config['merPkcs12']);
         }
         if (!empty($config['signFilePassword'])){
-            $this->secss->setSignFilePassword($config['signFilePassword']);
+            $this->setSignFilePassword($config['signFilePassword']);
         }
         if (empty($config['CPPublicKey'])){
-            $this->secss->setVerifyFile($config['verifyFile']);
+            $this->setVerifyFile($config['verifyFile']);
         }else{
-            $this->secss->setCPPublicKey($config['CPPublicKey']);
+            $this->setCPPublicKey($config['CPPublicKey']);
         }
 
         if (!empty($config['signInvalidFieldsArray'])){
-            $this->secss->setSignInvalidFields($config['signInvalidFieldsArray']);
+            $this->setSignInvalidFields($config['signInvalidFieldsArray']);
         }
 
     }
