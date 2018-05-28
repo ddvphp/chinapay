@@ -132,10 +132,6 @@ class Pay
         if (!is_array($config)) {
             return;
         }
-        if (!empty($config['mchId'])) {
-            $this->setMchId($config['mchId']);
-        }
-
         if (empty($config['merPkcs12'])){
             $this->setSignFile($config['signFile']);
         }else{
