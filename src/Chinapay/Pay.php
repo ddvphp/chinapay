@@ -3,11 +3,26 @@
 namespace DdvPhp\Chinapay;
 
 
+use DdvPhp\DdvUrl;
+use Ddvphp\ChinaPay\Util\Secss;
+
 class Pay
 {
     private $config = array();
+    /**
+     * @var $secss Secss|null
+     */
+    protected $secss = null;
     private $transResveredKey = 'TranReserved';
     private $signatureKey = 'Signature';
+
+    private $signFile;
+    private $merPkcs12;
+    private $signFilePassword = '';
+    private $signInvalidFieldsArray;
+    private $verifyFile;
+    private $CPPublicKey;
+
     private $busiType = '0001'; //业务类型,固定值:0001
     private $curryNoArray = array( //ISO 4217的货币代码
         'CNY', //人民币
@@ -40,6 +55,78 @@ class Pay
         return $this;
     }
 
+    /**
+     * 设置 PKCS12 证书文件
+     * @param string $path
+     * @throws Exception
+     */
+    public function setSignFile($path = ''){
+        $this->signFile = $path;
+        return $this;
+    }
+    /**
+     * 设置 PKCS12 证书文件内容
+     * @param string $path
+     * @throws Exception
+     */
+    public function setMerPkcs12($data = ''){
+        if (empty($data)){
+            throw new Exception('读取pfx证书不能为空', 'SIGN_FILE_PFX_CERT_NOT_EMPTY');
+        }
+        $this->merPkcs12 = $data;
+        return $this;
+    }
+
+    /**
+     * 设置 PKCS12 证书密码
+     * @param string $password
+     */
+    public function setSignFilePassword($password = ''){
+        $this->signFilePassword = empty($password)?'':$password;
+        return $this;
+    }
+
+    /**
+     * 设置 签名的字段
+     * @param string $fields
+     * @throws Exception
+     */
+    public function setSignInvalidFields($fields = ''){
+        if (empty($fields)){
+            $fields = array();
+        }
+        if (is_string($fields)){
+            $fields = explode(',', $fields);
+        }
+        if (!is_array($fields)){
+            throw new Exception('fields必须是数字或者英文逗号隔开字符串', 'SIGN_FILE_INVALID_FIELDS_MUST_ARRAY');
+        }
+        $this->signInvalidFieldsArray = $fields;
+        return $this;
+    }
+
+
+    /**
+     * 配置验证文件
+     * @param $path
+     * @throws Exception
+     */
+    public function setVerifyFile($path){
+        $this->verifyFile = $path;
+        $this->loadCPPublicKey();
+        return $this;
+    }
+    /**
+     * 设置CP公钥证书内容
+     * @throws Exception
+     */
+    public function setCPPublicKey($data){
+        if (empty($data)) {
+            throw new Exception('读取CP公钥证书文件失败', 'SIGN_FILE_CP_CERT_READ_FAIL', INIT_VERIFY_CERT_ERROR);
+        }
+        $this->CPPublicKey = $data;
+        return $this;
+    }
     public function setConfig($config = null)
     {
         if (!is_array($config)) {
@@ -48,10 +135,55 @@ class Pay
         if (!empty($config['mchId'])) {
             $this->setMchId($config['mchId']);
         }
+
+        if (empty($config['merPkcs12'])){
+            $this->secss->setSignFile($config['signFile']);
+        }else{
+            $this->secss->setMerPkcs12($config['merPkcs12']);
+        }
+        if (!empty($config['signFilePassword'])){
+            $this->secss->setSignFilePassword($config['signFilePassword']);
+        }
+        if (empty($config['CPPublicKey'])){
+            $this->secss->setVerifyFile($config['verifyFile']);
+        }else{
+            $this->secss->setCPPublicKey($config['CPPublicKey']);
+        }
+
+        if (!empty($config['signInvalidFieldsArray'])){
+            $this->secss->setSignInvalidFields($config['signInvalidFieldsArray']);
+        }
+
     }
 
+    public function loadSecssUtil(){
+        $this->secss =new Secss();
+
+        if (empty($this->merPkcs12)){
+            $this->secss->setSignFile($this->signFile);
+        }else{
+            $this->secss->setMerPkcs12($this->merPkcs12);
+        }
+        if ($this->signFilePassword){
+            $this->secss->setSignFilePassword($this->signFilePassword);
+        }
+        if (empty($this->CPPublicKey)){
+            $this->secss->setVerifyFile($this->verifyFile);
+        }else{
+            $this->secss->setCPPublicKey($this->CPPublicKey);
+        }
+
+        if (!empty($this->signInvalidFieldsArray)){
+            $this->secss->setSignInvalidFields($this->signInvalidFieldsArray);
+        }
+
+        $this->secss->init();
+    }
     public function webB2bPay($params = array())
     {
+        if (empty($this->secss)){
+            $this->loadSecssUtil();
+        }
         // 0002 企业网银支付，此处因为是企业网银 所以写死
         $params['TranType'] = '0002';
         //业务类型 固定值:0001
@@ -106,7 +238,7 @@ class Pay
             if (!is_string($params["TranReserved"])) {
                 throw new Exception('TranReserved必须是json字符串或者数组', 'MER_ORDER_NO_MUST_INPUT');
             }
-            $transResvedStr = $secssUtil->decryptData($transResvedStr);
+            $transResvedStr = $this->secss->decryptData($transResvedStr);
             $params[$this->transResveredKey] = $transResvedStr;
         }
         if (!empty($params['CurryNo'])) {
@@ -220,5 +352,9 @@ class Pay
                 throw new Exception('RiskData必须是json字符串或者数组', 'RISK_DATA_MUST_STRING');
             }
         }
+
+        $this->secss->sign($params);
+        $params[$this->signatureKey] = $this->secss->getSign();
+        return $params;
     }
 }

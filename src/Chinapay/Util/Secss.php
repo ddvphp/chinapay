@@ -152,7 +152,7 @@ class Secss {
      * 设置CP公钥证书内容
      * @throws Exception
      */
-    protected function setCPPublicKey($data){
+    public function setCPPublicKey($data){
         if (empty($data)) {
             throw new Exception('读取CP公钥证书文件失败', 'SIGN_FILE_CP_CERT_READ_FAIL', INIT_VERIFY_CERT_ERROR);
         }
@@ -242,10 +242,9 @@ class Secss {
             if (!$sign_falg) {
                 throw new Exception('签名过程发生错误！', 'CP_SIGN_GOES_WRONG', CP_SIGN_GOES_WRONG);
             }
-            $base64Result = base64_encode($signature);
-            $this->sign = $base64Result;
+            $this->sign = base64_encode($signature);
             $this->errCode = CP_SUCCESS;
-            return $this;
+            return $this->sign;
         }
         catch(Exception $e) {
             $this->writeLog("in SecssUitl->sign 签名异常,message=" . $e->getMessage());
