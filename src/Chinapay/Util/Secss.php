@@ -1,5 +1,5 @@
 <?php
-namespace DdvPhp\ChinaPay\Util;
+namespace DdvPhp\Chinapay\Util;
 // define('CP_SIGN_FILE', "sign.file");
 // define('CP_SIGN_FILE_PASSWORD', "sign.file.password");
 // define('CP_SIGN_CERT_TYPE', "sign.cert.type");
