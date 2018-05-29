@@ -353,4 +353,19 @@ class Pay
         $params[$this->signatureKey] = $this->secss->getSign();
         return $params;
     }
+
+    /**
+     * @param $params
+     * 验证银联回调数据
+     */
+    public function verify($params){
+        if (empty($this->secss)){
+            $this->loadSecssUtil();
+        }
+        $this->secss->verify($params);
+        if ("00"!==$this->secss->getErrCode()){
+           return false;
+        }
+        return true;
+    }
 }
