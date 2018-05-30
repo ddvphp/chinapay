@@ -422,9 +422,8 @@ class Pay
         }
         $this->secss->verify($params);
         if ("00"!==$this->secss->getErrCode()){
-           return false;
+            throw new Exception("验证数据错误","VERIFY_ERROR");
         }
-        return true;
     }
 
     public function sendPost($url, $postData)
