@@ -423,6 +423,7 @@ class Pay
             //商户提交交易的时间，格 式为 HHMMDD，例如交 易时间10点01分22秒， 则值为 100122
             throw new Exception("交易时间不能为空", "TRANTIME_MUST_INPUT");
         }
+        var_dump($params);
 
 
         $result = $this->sendPost(self::API_URL_QUERY, $params);
