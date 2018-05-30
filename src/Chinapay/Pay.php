@@ -424,8 +424,6 @@ class Pay
             throw new Exception("交易时间不能为空", "TRANTIME_MUST_INPUT");
         }
         var_dump($params);
-
-
         $result = $this->sendPost(self::API_URL_QUERY, $params);
         return $result;
     }
