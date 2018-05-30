@@ -8,6 +8,8 @@ use DdvPhp\Chinapay\Util\Secss;
 
 class Pay
 {
+    const API_URL_QUERY = 'http://payment.chinapay.com/CTITS/service/rest/forward/syn/000000000060/0/0/0/0/0';
+    const API_URL_PAY = 'http://payment.chinapay.com/CTITS/service/rest/page/nref/000000000017/0/0/0/0/0';
     private $config = array();
     /**
      * @var $secss Secss|null
@@ -24,6 +26,9 @@ class Pay
     private $CPPublicKey;
 
     private $busiType = '0001'; //业务类型,固定值:0001
+    private $acqCode = ''; //业务类型,固定值:0001
+    private $merId = ''; //商户号
+    private $accessType = '0'; //接入类型:0:商户身份接入(默认) 1:机构身份接入
     private $curryNoArray = array( //ISO 4217的货币代码
         'CNY', //人民币
         'HKD', //港元
@@ -52,6 +57,22 @@ class Pay
     public function setSignatureKey($key = 'Signature')
     {
         $this->signatureKey = $key;
+        return $this;
+    }
+
+    public function setAcqCode($acqCode)
+    {
+        $this->acqCode = $acqCode;
+        return $this;
+    }
+    public function setMerId($merId)
+    {
+        $this->merId = $merId;
+        return $this;
+    }
+    public function setAccessType($accessType)
+    {
+        $this->accessType = $accessType;
         return $this;
     }
 
@@ -149,6 +170,15 @@ class Pay
         if (!empty($config['signInvalidFieldsArray'])){
             $this->setSignInvalidFields($config['signInvalidFieldsArray']);
         }
+        if (!empty($config['acqCode'])){
+            $this->setAcqCode($config['acqCode']);
+        }
+        if (!empty($config['merId'])){
+            $this->setMerId($config['merId']);
+        }
+        if (!empty($config['accessType'])){
+            $this->setAccessType($config['accessType']);
+        }
 
     }
 
@@ -175,6 +205,29 @@ class Pay
 
         $this->secss->init();
     }
+    public function getBaseParams($params = array())
+    {
+        //业务类型 固定值:0001
+        if (empty($params['BusiType'])) {
+            $params['BusiType'] = $this->busiType;
+        }
+        // 由 ChinaPay 分配，用于确 认商户身份
+        if (empty($params['MerId'])) {
+            $params['MerId'] = $this->merId;
+        }
+        // 由 ChinaPay 分配，用于确 认商户身份
+        if (empty($params['AccessType'])) {
+            $params['AccessType'] = $this->accessType;
+        }
+        if (empty($params["MerId"])) {
+            // 由 ChinaPay 分配，用于确 认商户身份
+            throw new Exception('商户号不能为空', 'MERID_MUST_INPUT');
+        }
+        if (empty($params['Version'])) {
+            //认证支付和快捷支付:20150922 其余:20140728
+            throw new Exception("版本号不能为空", 'VERSIOB_NOT_EMPTY');
+        }
+    }
     public function webB2bPay($params = array())
     {
         if (empty($this->secss)){
@@ -182,19 +235,13 @@ class Pay
         }
         // 0002 企业网银支付，此处因为是企业网银 所以写死
         $params['TranType'] = '0002';
-        //业务类型 固定值:0001
-        $params['BusiType'] = $this->busiType;
         if (empty($params['Version'])) {
-            //认证支付和快捷支付:20150922 其余:20140728
-            throw new Exception("版本号不能为空", 'VERSIOB_NOT_EMPTY');
+            $params['Version'] = '20140728';
         }
+        $params = $this->getBaseParams($params);
         if (empty($params["MerOrderNo"])) {
             // 可包含字母和数字，与 MerId 和 TranDate 一起， 唯一确定一笔订单
             throw new Exception('订单号不能为空', 'MER_ORDER_NO_MUST_INPUT');
-        }
-        if (empty($params["MerId"])) {
-            // 由 ChinaPay 分配，用于确 认商户身份
-            throw new Exception('商户号不能为空', 'MERID_MUST_INPUT');
         }
         if (empty($params["TranDate"]) || !is_numeric($params["TranDate"])) {
             //商户提交交易的日期，格 式为YYYYMMDD，例如交易日期为2015年1月2 日，则值为 20150102
@@ -207,24 +254,6 @@ class Pay
         if (empty($params["OrderAmt"]) || !is_numeric($params["OrderAmt"])) {
             //订单金额(单位：分)
             throw new Exception("金额不能为空", 'ORDERAMT_MUST_INPUT');
-        }
-        if (!empty($params['Signature'])) {
-            throw new Exception("Signature签名不能为空", 'SIGNATURE_MUST_INPUT');
-        }
-        //非必传字段
-        if (!isset($params['AccessType'])) {
-            throw new Exception("接入类型不能为空", 'ACCESSTYPE_NOT_EMPTY');
-        } else {
-            //0:商户身份接入(默认) 1:机构身份接入
-            if (!in_array($params["AccessType"], [0, 1, '0', '1'])) {
-                throw new Exception("接入类型错误", 'ACCESSTYPE_NOT_EMPTY');
-            }
-            if ((int)$params["AccessType"] === 1) {
-                //由 ChinaPay 分配 AccessType=1 时，必填
-                if (empty($params["InstuId"])) {
-                    throw new Exception("接入机构号不能为空", 'INSTUIDE_NOT_EMPTY');
-                }
-            }
         }
         if (!empty($params["TranReserved"])) {
             if (is_array($params["TranReserved"])) {
@@ -353,6 +382,35 @@ class Pay
         $params[$this->signatureKey] = $this->secss->getSign();
         return $params;
     }
+    public function webB2bQuery($params = array())
+    {
+        if (empty($this->secss)){
+            $this->loadSecssUtil();
+        }
+        // 查询交易为0502，此处因为是查询交易 所以写死
+        $params['TranType'] = '0502';
+        if (empty($params['Version'])) {
+            $params['Version'] = '20140728';
+        }
+        $params = $this->getBaseParams($params);
+
+        if (empty($params["MerOrderNo"])) {
+            // 可包含字母和数字，与 MerId 和 TranDate 一起， 唯一确定一笔订单
+            throw new Exception('订单号不能为空', 'MER_ORDER_NO_MUST_INPUT');
+        }
+        if (empty($params["TranDate"]) || !is_numeric($params["TranDate"])) {
+            //商户提交交易的日期，格 式为YYYYMMDD，例如交易日期为2015年1月2 日，则值为 20150102
+            throw new Exception("交易日期不能为空", "TRANDATE_MUST_INPUT");
+        }
+        if (empty($params["TranTime"]) || !is_numeric($params["TranTime"])) {
+            //商户提交交易的时间，格 式为 HHMMDD，例如交 易时间10点01分22秒， 则值为 100122
+            throw new Exception("交易时间不能为空", "TRANTIME_MUST_INPUT");
+        }
+
+
+        $result = $this->sendPost(self::API_URL_QUERY, $params);
+        return $result;
+    }
 
     /**
      * @param $params
@@ -367,5 +425,21 @@ class Pay
            return false;
         }
         return true;
+    }
+
+    public function sendPost($url, $postData)
+    {
+        $postdata = DdvUrl::buildQuery($postData);
+        $options = array(
+            'http' => array(
+                'method' => 'POST',
+                'header' => 'Content-type:application/x-www-form-urlencoded',
+                'content' => $postdata,
+                'timeout' => 15 * 60
+            )
+        );
+        $context = stream_context_create($options);
+        $result = file_get_contents($url, false, $context);
+        return $result;
     }
 }
