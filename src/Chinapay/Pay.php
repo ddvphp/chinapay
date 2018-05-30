@@ -65,11 +65,13 @@ class Pay
         $this->acqCode = $acqCode;
         return $this;
     }
+
     public function setMerId($merId)
     {
         $this->merId = $merId;
         return $this;
     }
+
     public function setAccessType($accessType)
     {
         $this->accessType = $accessType;
@@ -81,17 +83,20 @@ class Pay
      * @param string $path
      * @throws Exception
      */
-    public function setSignFile($path = ''){
+    public function setSignFile($path = '')
+    {
         $this->signFile = $path;
         return $this;
     }
+
     /**
      * 设置 PKCS12 证书文件内容
      * @param string $path
      * @throws Exception
      */
-    public function setMerPkcs12($data = ''){
-        if (empty($data)){
+    public function setMerPkcs12($data = '')
+    {
+        if (empty($data)) {
             throw new Exception('读取pfx证书不能为空', 'SIGN_FILE_PFX_CERT_NOT_EMPTY');
         }
         $this->merPkcs12 = $data;
@@ -102,8 +107,9 @@ class Pay
      * 设置 PKCS12 证书密码
      * @param string $password
      */
-    public function setSignFilePassword($password = ''){
-        $this->signFilePassword = empty($password)?'':$password;
+    public function setSignFilePassword($password = '')
+    {
+        $this->signFilePassword = empty($password) ? '' : $password;
         return $this;
     }
 
@@ -112,14 +118,15 @@ class Pay
      * @param string $fields
      * @throws Exception
      */
-    public function setSignInvalidFields($fields = ''){
-        if (empty($fields)){
+    public function setSignInvalidFields($fields = '')
+    {
+        if (empty($fields)) {
             $fields = array();
         }
-        if (is_string($fields)){
+        if (is_string($fields)) {
             $fields = explode(',', $fields);
         }
-        if (!is_array($fields)){
+        if (!is_array($fields)) {
             throw new Exception('fields必须是数字或者英文逗号隔开字符串', 'SIGN_FILE_INVALID_FIELDS_MUST_ARRAY');
         }
         $this->signInvalidFieldsArray = $fields;
@@ -132,79 +139,85 @@ class Pay
      * @param $path
      * @throws Exception
      */
-    public function setVerifyFile($path){
+    public function setVerifyFile($path)
+    {
         $this->verifyFile = $path;
         $this->loadCPPublicKey();
         return $this;
     }
+
     /**
      * 设置CP公钥证书内容
      * @throws Exception
      */
-    public function setCPPublicKey($data){
+    public function setCPPublicKey($data)
+    {
         if (empty($data)) {
             throw new Exception('读取CP公钥证书文件失败', 'SIGN_FILE_CP_CERT_READ_FAIL', INIT_VERIFY_CERT_ERROR);
         }
         $this->CPPublicKey = $data;
         return $this;
     }
+
     public function setConfig($config = null)
     {
         if (!is_array($config)) {
             return;
         }
-        if (empty($config['merPkcs12'])){
+        if (empty($config['merPkcs12'])) {
             $this->setSignFile($config['signFile']);
-        }else{
+        } else {
             $this->setMerPkcs12($config['merPkcs12']);
         }
-        if (!empty($config['signFilePassword'])){
+        if (!empty($config['signFilePassword'])) {
             $this->setSignFilePassword($config['signFilePassword']);
         }
-        if (empty($config['CPPublicKey'])){
+        if (empty($config['CPPublicKey'])) {
             $this->setVerifyFile($config['verifyFile']);
-        }else{
+        } else {
             $this->setCPPublicKey($config['CPPublicKey']);
         }
 
-        if (!empty($config['signInvalidFieldsArray'])){
+        if (!empty($config['signInvalidFieldsArray'])) {
             $this->setSignInvalidFields($config['signInvalidFieldsArray']);
         }
-        if (!empty($config['acqCode'])){
+        if (!empty($config['acqCode'])) {
             $this->setAcqCode($config['acqCode']);
         }
-        if (!empty($config['merId'])){
+        if (!empty($config['merId'])) {
             $this->setMerId($config['merId']);
         }
-        if (!empty($config['accessType'])){
+        if (!empty($config['accessType'])) {
             $this->setAccessType($config['accessType']);
         }
 
     }
 
-    public function loadSecssUtil(){
-        $this->secss =new Secss();
+    public function loadSecssUtil()
+    {
+        $this->secss = new Secss();
 
-        if (empty($this->merPkcs12)){
+        if (empty($this->merPkcs12)) {
             $this->secss->setSignFile($this->signFile);
-        }else{
+        } else {
             $this->secss->setMerPkcs12($this->merPkcs12);
         }
-        if ($this->signFilePassword){
+        if ($this->signFilePassword) {
             $this->secss->setSignFilePassword($this->signFilePassword);
         }
-        if (empty($this->CPPublicKey)){
+        if (empty($this->CPPublicKey)) {
             $this->secss->setVerifyFile($this->verifyFile);
-        }else{
+        } else {
             $this->secss->setCPPublicKey($this->CPPublicKey);
         }
 
-        if (!empty($this->signInvalidFieldsArray)){
+        if (!empty($this->signInvalidFieldsArray)) {
             $this->secss->setSignInvalidFields($this->signInvalidFieldsArray);
         }
 
         $this->secss->init();
     }
+
     public function getBaseParams($params = array())
     {
         //业务类型 固定值:0001
@@ -228,9 +241,10 @@ class Pay
             throw new Exception("版本号不能为空", 'VERSIOB_NOT_EMPTY');
         }
     }
+
     public function webB2bPay($params = array())
     {
-        if (empty($this->secss)){
+        if (empty($this->secss)) {
             $this->loadSecssUtil();
         }
         // 0002 企业网银支付，此处因为是企业网银 所以写死
@@ -382,9 +396,10 @@ class Pay
         $params[$this->signatureKey] = $this->secss->getSign();
         return $params;
     }
+
     public function webB2bQuery($params = array())
     {
-        if (empty($this->secss)){
+        if (empty($this->secss)) {
             $this->loadSecssUtil();
         }
         // 查询交易为0502，此处因为是查询交易 所以写死
@@ -392,7 +407,8 @@ class Pay
         if (empty($params['Version'])) {
             $params['Version'] = '20140728';
         }
-        $params = $this->getBaseParams($params);
+        $paramsExtra = $this->getBaseParams($params);
+        $params = array_merge($params, $paramsExtra);
 
         if (empty($params["MerOrderNo"])) {
             // 可包含字母和数字，与 MerId 和 TranDate 一起， 唯一确定一笔订单
@@ -416,13 +432,14 @@ class Pay
      * @param $params
      * 验证银联回调数据
      */
-    public function verify($params){
-        if (empty($this->secss)){
+    public function verify($params)
+    {
+        if (empty($this->secss)) {
             $this->loadSecssUtil();
         }
         $this->secss->verify($params);
-        if ("00"!==$this->secss->getErrCode()){
-            throw new Exception("验证数据错误","VERIFY_ERROR");
+        if ("00" !== $this->secss->getErrCode()) {
+            throw new Exception("验证数据错误", "VERIFY_ERROR");
         }
     }
 
