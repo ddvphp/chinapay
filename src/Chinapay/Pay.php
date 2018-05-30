@@ -240,6 +240,7 @@ class Pay
             //认证支付和快捷支付:20150922 其余:20140728
             throw new Exception("版本号不能为空", 'VERSIOB_NOT_EMPTY');
         }
+        return $params;
     }
 
     public function webB2bPay($params = array())
