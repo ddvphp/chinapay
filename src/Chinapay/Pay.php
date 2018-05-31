@@ -428,7 +428,8 @@ class Pay
         $this->secss->sign($params);
         $params[$this->signatureKey] = $this->secss->getSign();
         $result = $this->sendPost(self::API_URL_QUERY, $params);
-        return $result;
+
+        return DdvUrl::parseQuery($result);
     }
 
     /**
