@@ -409,6 +409,7 @@ class Pay
         }
         // 查询交易为0502，此处因为是查询交易 所以写死
         $params['TranType'] = '0502';
+        $params['BusiType'] = '0001';
         if (empty($params['Version'])) {
             $params['Version'] = '20140728';
         }
