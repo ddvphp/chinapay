@@ -422,10 +422,10 @@ class Pay
             //商户提交交易的日期，格 式为YYYYMMDD，例如交易日期为2015年1月2 日，则值为 20150102
             throw new Exception("交易日期不能为空", "TRANDATE_MUST_INPUT");
         }
-        if (empty($params["TranTime"]) || !is_numeric($params["TranTime"])) {
-            //商户提交交易的时间，格 式为 HHMMDD，例如交 易时间10点01分22秒， 则值为 100122
-            throw new Exception("交易时间不能为空", "TRANTIME_MUST_INPUT");
-        }
+//        if (empty($params["TranTime"]) || !is_numeric($params["TranTime"])) {
+//            //商户提交交易的时间，格 式为 HHMMDD，例如交 易时间10点01分22秒， 则值为 100122
+//            throw new Exception("交易时间不能为空", "TRANTIME_MUST_INPUT");
+//        }
 
         $result = $this->sendPost(self::API_URL_QUERY, $params);
         return $result;
