@@ -383,7 +383,7 @@ class Pay
         }
         if (!empty($params['RemoteAddr'])) {
             //防钓鱼客户浏览器 IP如商户开通校验 IP 防钓鱼验证，可填写此域做防钓鱼使用。 ChinaPay 会获取持卡人访问 IP 和该字段进行比较，如果不一致，则会进行防钓鱼 提示或拦截交易。
-            if (!is_numeric($params['RemoteAddr'])) {
+            if (!filter_var($params['RemoteAddr'], FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)){
                 throw new Exception('RemoteAddr必须是数字', 'REMOTE_ADDR_MUST_NUMBER');
             }
         }
