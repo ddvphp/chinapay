@@ -72,6 +72,10 @@ class Pay
         return $this;
     }
 
+    public function getMerId()
+    {
+        return $this->merId;
+    }
     public function setAccessType($accessType)
     {
         $this->accessType = $accessType;
